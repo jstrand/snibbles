@@ -6,6 +6,7 @@ import Matrix exposing (Matrix)
 type Piece =
     Empty
   | SnakePart
+  | Food
 
 
 type alias Board = Matrix Piece
@@ -25,6 +26,10 @@ setValue value pos matrix =
 
 addSnake : List (Int, Int) -> Board -> Board
 addSnake = apply SnakePart
+
+
+addFood : (Int, Int) -> Board -> Board
+addFood = setValue Food
 
 
 apply : Piece -> List (Int, Int) -> Board -> Board

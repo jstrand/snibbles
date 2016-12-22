@@ -8,6 +8,7 @@ mapPiece piece =
   case piece of
     Board.Empty -> '.'
     Board.SnakePart -> '*'
+    Board.Food -> '@'
 
 
 boardToString : Board -> String

@@ -1,4 +1,3 @@
-
 import Snake exposing (..)
 import Board
 import AsciiBoard
@@ -8,10 +7,13 @@ import Html.Attributes as Att
 import String
 import Time exposing (Time)
 import Keyboard
+import Random
 
 
 type alias Model =
   { snake: Snake
+  , food: Snake.Position
+  , seed: Random.Seed
   }
 
 
@@ -20,9 +22,29 @@ type Msg =
   | Key Keyboard.KeyCode
 
 
+positionGen = Random.pair (Random.int 0 width) (Random.int 0 height)
+
+
+nextFoodPosition seed = Random.step positionGen seed
+
+
+moveSnake model =
+  let newSnake = Snake.move model.snake boardIndex
+      eating = Snake.head newSnake == model.food
+      growingSnake = Snake.grow newSnake
+      (nextFood, seed) = nextFoodPosition model.seed
+  in
+    if eating then
+    { model | snake = growingSnake
+    , food = nextFood
+    , seed = seed
+    }
+    else
+    { model | snake = newSnake}
+
 
 onTick model =
-  ( { model | snake = Snake.move model.snake boardSize }
+  ( moveSnake model
   , Cmd.none
   )
 
@@ -52,12 +74,14 @@ update msg model =
 boardSize = (80, 40)
 width = Tuple.first boardSize
 height = Tuple.second boardSize
+boardIndex = (width-1, height-1)
 
 
 board : Model -> String
 board model =
   Board.emptyBoard width height
   |> Board.addSnake model.snake.body
+  |> Board.addFood model.food
   |> AsciiBoard.boardToString
 
 
@@ -75,7 +99,7 @@ subscriptions model = Sub.batch [Time.every (Time.second/8) Tick, Keyboard.press
 
 
 init : (Model, Cmd Msg)
-init = (Model ((Snake [(10,10), (11,10)]) Right), Cmd.none)
+init = (Model ((Snake [(10,10)]) Right 4) (2,2) (Random.initialSeed 12345), Cmd.none)
 
 
 main =

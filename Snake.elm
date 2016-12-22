@@ -20,9 +20,15 @@ type alias Position = (Int, Int)
 
 
 type alias Snake =
-  { body: List Position,
-    moving: Direction
+  { body: List Position
+  , moving: Direction
+  , growth: Int
   }
+
+
+head snake =
+  List.head snake.body
+  |> Maybe.withDefault (0,0)
 
 
 changeDir snake dir =
@@ -38,9 +44,14 @@ wrap value max = if value < 0 then max else if value > max then 0 else value
 tailOrEmpty = Maybe.withDefault [] << List.tail
 
 
+growth = 2
+grow snake = { snake | growth = snake.growth + growth }
+
+
 move snake max =
-  let (x,y) = Maybe.withDefault (0,0) (List.head snake.body)
+  let (x,y) = head snake
       dropLast = List.reverse >> tailOrEmpty >> List.reverse
+      tailTransform x = if snake.growth <= 0 then (dropLast x) else x
       dir = snake.moving
       (maxX, maxY) = max
 
@@ -51,7 +62,8 @@ move snake max =
         Left -> (wrap (x - 1) maxX, y)
         Right -> (wrap (x + 1) maxX, y)
 
-      newBody = dropLast <| nextHead :: snake.body
+      newBody = tailTransform <| nextHead :: snake.body
+      newGrowth = if snake.growth <= 0 then 0 else snake.growth-1
   in
-    { snake | body = newBody }
+    { snake | body = newBody, growth = newGrowth }
 
