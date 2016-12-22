@@ -2,3 +2,17 @@ body {
   background-color: #181818;
   color: #81f265;
 }
+
+.container {
+}
+
+.board {
+  left: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  display: inline-block;
+}
+
+.score {
+}
+

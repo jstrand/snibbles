@@ -14,6 +14,7 @@ type alias Model =
   { snake: Snake
   , food: Snake.Position
   , seed: Random.Seed
+  , ticks: Int
   }
 
 
@@ -62,7 +63,9 @@ moveSnake model =
 
 
 onTick model =
-  ( moveSnake model
+  let movedModel = moveSnake model
+  in
+  ( { movedModel | ticks = model.ticks + 1 }
   , Cmd.none
   )
 
@@ -99,10 +102,10 @@ board model =
 
 view : Model -> Html Msg
 view model =
-  Html.div []
-  [ Html.pre []
-    [ Html.text (board model)
-    ]
+  Html.div [Att.class "container"]
+  [ Html.pre [Att.class "board"] [ Html.text (board model) ]
+  , Html.pre [Att.class "score"]
+      [ Html.text <| toString <| List.length model.snake.body ]
   ]
 
 
@@ -110,14 +113,14 @@ subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch [Time.every (Time.second/8) Tick, Keyboard.presses Key]
 
 
-boardSize = (20, 10)
+boardSize = (30, 10)
 width = Tuple.first boardSize
 height = Tuple.second boardSize
 boardIndex = (width-1, height-1)
 
 
 init : (Model, Cmd Msg)
-init = (Model ((Snake [(0,0)]) Right 4 True) (2,2) (Random.initialSeed 12345), Cmd.none)
+init = (Model ((Snake [(0,0)]) Right 4 True) (2,2) (Random.initialSeed 12345) 0, Cmd.none)
 
 
 main =

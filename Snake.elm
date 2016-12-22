@@ -51,7 +51,7 @@ wrap value max = if value < 0 then max else if value > max then 0 else value
 tailOrEmpty = Maybe.withDefault [] << List.tail
 
 
-growth = 2
+growth = 4
 grow snake = { snake | growth = snake.growth + growth }
 
 
