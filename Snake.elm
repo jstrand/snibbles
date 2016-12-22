@@ -23,12 +23,19 @@ type alias Snake =
   { body: List Position
   , moving: Direction
   , growth: Int
+  , alive: Bool
   }
+
+
+kill snake = { snake | alive = False }
 
 
 head snake =
   List.head snake.body
   |> Maybe.withDefault (0,0)
+
+
+tail snake = tailOrEmpty snake.body
 
 
 changeDir snake dir =
