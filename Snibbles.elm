@@ -4,7 +4,6 @@ import AsciiBoard
 
 import Html exposing (Html)
 import Html.Attributes as Att
-import String
 import Time exposing (Time)
 import Keyboard
 import Random
@@ -23,7 +22,7 @@ type Msg =
   | Key Keyboard.KeyCode
 
 
-positionGen = Random.pair (Random.int 0 (Tuple.first boardIndex)) (Random.int 0 (Tuple.second boardIndex))
+positionGen = Random.pair (Random.int 0 (width-1)) (Random.int 0 (height-1))
 
 
 obstacles model = model.snake.body
@@ -110,7 +109,7 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model = Sub.batch [Time.every (Time.second/8) Tick, Keyboard.presses Key]
+subscriptions model = Sub.batch [Time.every (Time.second/8) Tick, Keyboard.downs Key]
 
 
 boardSize = (30, 10)
