@@ -1,6 +1,6 @@
 module Board exposing (..)
 
-import Matrix exposing (Matrix)
+import Matrix exposing (Matrix, map)
 
 
 type Piece =
@@ -12,13 +12,19 @@ type Piece =
 type alias Board = Matrix Piece
 
 
+map : (a -> b) -> Matrix a -> Matrix b
 map = Matrix.map
+
+
+toList : Matrix a -> List (List a)
 toList = Matrix.toList
 
 
+emptyBoard : Int -> Int -> Board
 emptyBoard width height = Matrix.matrix height width (always Empty)
 
 
+setValue : Piece -> ( Int, Int ) -> Board -> Board
 setValue value pos matrix =
   case pos of
     (x,y) -> Matrix.set (y, x) value matrix

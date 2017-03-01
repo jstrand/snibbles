@@ -7,6 +7,7 @@ import Html.Attributes as Att
 import Time exposing (Time)
 import Keyboard
 import Random
+import WebSocket
 
 
 type alias Model =
@@ -20,6 +21,10 @@ type alias Model =
 type Msg =
     Tick Time
   | Key Keyboard.KeyCode
+  | IncomingMessage String
+
+
+server = "ws://localhost:9000"
 
 
 positionGen = Random.pair (Random.int 0 (width-1)) (Random.int 0 (height-1))
@@ -64,31 +69,48 @@ moveSnake model =
 onTick model =
   let movedModel = moveSnake model
   in
-  ( { movedModel | ticks = model.ticks + 1 }
-  , Cmd.none
-  )
+    { movedModel | ticks = model.ticks + 1 }
 
 
 changeDir model dir =
-  ( { model | snake = Snake.changeDir model.snake dir}
-  , Cmd.none
-  )
+  { model | snake = Snake.changeDir model.snake dir}
+
+
+dirAsString dir =
+  case dir of
+    Snake.Left -> "L"
+    Snake.Right -> "R"
+    Snake.Up -> "U"
+    Snake.Down -> "D"
+
+
+stringAsDir str =
+  case str of
+    "L" -> Snake.Left
+    "R" -> Snake.Right
+    "U" -> Snake.Up
+    "D" -> Snake.Down
+    _ -> Snake.Right
+
+
+sendDir dir = WebSocket.send server (dirAsString dir)
 
 
 onKey code model =
   case code of
-    37 -> changeDir model Snake.Left
-    39 -> changeDir model Snake.Right
-    38 -> changeDir model Snake.Up
-    40 -> changeDir model Snake.Down
+    37 -> (model, sendDir Snake.Left)
+    39 -> (model, sendDir Snake.Right)
+    38 -> (model, sendDir Snake.Up)
+    40 -> (model, sendDir Snake.Down)
     _ -> (model, Cmd.none)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Tick time -> onTick model
+    Tick time -> (onTick model, Cmd.none)
     Key code -> onKey code model
+    IncomingMessage message -> (changeDir model (stringAsDir message), Cmd.none)
 
 
 board : Model -> String
@@ -109,7 +131,11 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model = Sub.batch [Time.every (Time.second/8) Tick, Keyboard.downs Key]
+subscriptions model = Sub.batch
+  [ Time.every (Time.second/8) Tick
+  , Keyboard.downs Key
+  , WebSocket.listen server IncomingMessage
+  ]
 
 
 boardSize = (30, 10)
