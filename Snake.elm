@@ -1,4 +1,5 @@
 module Snake exposing (..)
+import Position exposing (Position)
 
 
 type Direction =
@@ -16,26 +17,16 @@ opposing dir =
   Right -> Left
 
 
-type alias Position = (Int, Int)
-
-
 type alias Snake =
-  { body: List Position
+  { headPosition: Position
   , moving: Direction
+  , body: List Direction
   , growth: Int
   , alive: Bool
   }
 
 
 kill snake = { snake | alive = False }
-
-
-head snake =
-  List.head snake.body
-  |> Maybe.withDefault (0,0)
-
-
-tail snake = tailOrEmpty snake.body
 
 
 changeDir snake dir =
@@ -48,29 +39,26 @@ changeDir snake dir =
 wrap value max = if value < 0 then max else if value > max then 0 else value
 
 
-tailOrEmpty = Maybe.withDefault [] << List.tail
-
-
 growth = 4
 grow snake = { snake | growth = snake.growth + growth }
 
 
-move snake max =
-  let (x,y) = head snake
-      dropLast = List.reverse >> tailOrEmpty >> List.reverse
-      tailTransform x = if snake.growth <= 0 then (dropLast x) else x
-      dir = snake.moving
-      (maxX, maxY) = max
+relativePosition : Position -> Direction -> Position
+relativePosition (x,y) dir =
+  case dir of
+    Up -> (x,y + 1)
+    Down -> (x,y)
+    Left -> (x,y)
+    Right -> (x,y)
 
-      nextHead =
-        case dir of
-        Up -> (x, wrap (y - 1) maxY)
-        Down -> (x, wrap (y + 1) maxY)
-        Left -> (wrap (x - 1) maxX, y)
-        Right -> (wrap (x + 1) maxX, y)
+toPositions : Snake -> List Position
+toPositions snake = snake.headPosition :: []
 
-      newBody = tailTransform <| nextHead :: snake.body
-      newGrowth = if snake.growth <= 0 then 0 else snake.growth-1
-  in
-    { snake | body = newBody, growth = newGrowth }
 
+snake1 =
+  { headPosition = (10,10)
+  , moving = Left
+  , body = [Right, Down]
+  , growth = 0
+  , alive = True
+  }
