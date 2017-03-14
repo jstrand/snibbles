@@ -35,21 +35,22 @@ obstacles model = model.snake.body
 
 nextFoodPosition seed obstacles =
   let (randPos, nextSeed) = Random.step positionGen seed
-      collided = collision randPos obstacles
+      collided = detectCollision randPos obstacles
   in
   if collided then
     nextFoodPosition nextSeed obstacles
   else
     (randPos, nextSeed)
 
-collision = List.member
+
+detectCollision = List.member
 
 
 moveSnake model =
   let movedSnake = Snake.move model.snake boardIndex
       movedHead = Snake.head movedSnake
       eating = movedHead == model.food
-      collided = collision movedHead (Snake.tail movedSnake)
+      collided = detectCollision movedHead (Snake.tail movedSnake)
       growingSnake = Snake.grow movedSnake
       modelMoved = { model | snake = movedSnake }
       (nextFood, seed) = nextFoodPosition model.seed (obstacles modelMoved)
@@ -72,7 +73,7 @@ onTick model =
     { movedModel | ticks = model.ticks + 1 }
 
 
-changeDir model dir =
+changeDir dir model =
   { model | snake = Snake.changeDir model.snake dir}
 
 
@@ -93,6 +94,12 @@ stringAsDir str =
     _ -> Snake.Right
 
 
+handleIncomingMessage message =
+  case message of
+    "T" -> onTick
+    _ -> onTick << changeDir (stringAsDir message)
+
+
 sendDir dir = WebSocket.send server (dirAsString dir)
 
 
@@ -110,7 +117,7 @@ update msg model =
   case msg of
     Tick time -> (onTick model, Cmd.none)
     Key code -> onKey code model
-    IncomingMessage message -> (changeDir model (stringAsDir message), Cmd.none)
+    IncomingMessage message -> (handleIncomingMessage message model, Cmd.none)
 
 
 board : Model -> String
@@ -132,8 +139,9 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch
-  [ Time.every (Time.second/8) Tick
-  , Keyboard.downs Key
+  [
+  -- Time.every (Time.second/8) Tick
+  Keyboard.downs Key
   , WebSocket.listen server IncomingMessage
   ]
 
