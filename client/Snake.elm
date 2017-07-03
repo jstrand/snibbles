@@ -27,6 +27,15 @@ type alias Snake =
   }
 
 
+newSnake : Position -> Snake
+newSnake position =
+  { body = [position]
+  , moving = Right
+  , growth = 4
+  , alive = True
+  }
+
+
 kill snake = { snake | alive = False }
 
 

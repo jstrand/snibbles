@@ -2,6 +2,7 @@ import tornado.websocket
 import tornado.ioloop
 import threading
 import time
+import json
 
 
 class GameThread(threading.Thread):
@@ -10,44 +11,49 @@ class GameThread(threading.Thread):
     threading.Thread.__init__(self)
     self.playerList = playerList
 
-  def getAndClearAllMessages(self):
+  def getAllMessages(self):
     messages = []
     for player in playerList:
-      messages += player.getLatestMessage()
-      player.clearLatestMessage()
+      message = player.getLatestMessage()
+      messages.append(message)
     return messages
 
   def run(self):
     while True:
-      messages = self.getAndClearAllMessages()
-      if messages == []:
-        messages = ["T"]
+      message = "[" + ", ".join(self.getAllMessages()) + "]"
+      #message = self.getAllMessages()
+      print message
+
       for player in playerList:
-        for message in messages:
-     	    player.write_message(message)
+        player.write_message(message)
 
       time.sleep(0.125)
 
-
+playerNumber = 0
 playerList = []
 
 class PlayerSocket(tornado.websocket.WebSocketHandler):
 
     def __init__(self, application, request, **kwargs):
+      global playerList
+      global playerNumber
+
       super(PlayerSocket, self).__init__(application, request)
       self.playerList = playerList
       self.latestMessage = ""
+      self.number = playerNumber
+      playerNumber = 1 #playerNumber + 1
 
     def open(self):
       self.playerList.append(self)
       print("WebSocket opened")
 
     def on_message(self, message):
-      print message
       self.latestMessage = message
+      print message
 
     def getLatestMessage(self):
-      return self.latestMessage
+      return '{ "id": ' + str(self.number) + ', "msg": "' + self.latestMessage + '"}'
 
     def clearLatestMessage(self):
       self.latestMessage = ""
