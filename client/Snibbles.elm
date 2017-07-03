@@ -68,8 +68,8 @@ snakeDirDecoder = Json.Decode.map stringAsDir snakeMsgDecoder
 messageDecoder = Json.Decode.list (Json.Decode.map2 (,) snakeIdDecoder snakeDirDecoder)
 
 
-handleIncomingMessage : String -> Game -> Game
-handleIncomingMessage message game =
+applyIncomingMessage : Game -> String -> Game
+applyIncomingMessage game message =
   let
     parsedMessage = decodeString messageDecoder message
   in
@@ -90,12 +90,18 @@ onKey code model =
     _ -> (model, Cmd.none)
 
 
+performGameStep : Game -> String -> Game
+performGameStep game message =
+  applyIncomingMessage game message
+  |> moveSnakes
+
+
 update : Msg -> Game -> (Game, Cmd Msg)
-update msg model =
+update msg game =
   case msg of
-    Tick time -> (onTick model, Cmd.none)
-    Key code -> onKey code model
-    IncomingMessage message -> (moveSnakes (handleIncomingMessage message model), Cmd.none)
+    Tick time -> (onTick game, Cmd.none)
+    Key code -> onKey code game
+    IncomingMessage message -> (performGameStep game message, Cmd.none)
 
 
 board : Game -> String
@@ -124,10 +130,6 @@ subscriptions model = Sub.batch
   ]
 
 
---init : (Game, Cmd Msg)
---init = (Game ((Snake [(0,0)]) Right 4 True) (2,2) (Random.initialSeed 12345) 0, Cmd.none)
-
-
 main =
   Html.program
     { init =
@@ -139,31 +141,38 @@ main =
     }
 
 
-moveSnakes : Game -> Game
-moveSnakes model = moveSnakeById 1 model
-
-
-moveSnakeById : Int -> Game -> Game
-moveSnakeById snakeId game =
-  Dict.get snakeId game.snakes
-  |> Maybe.map (\snake -> moveSnake snake snakeId game)
-  |> Maybe.withDefault game
-
-
-moveSnake : Snake -> Int -> Game -> Game
-moveSnake snake snakeId game =
-  moveSnakeOnly snake snakeId game
-
-
-moveSnakeOnly : Snake -> Int -> Game -> Game
-moveSnakeOnly snake snakeId game =
+moveOneSnake : Game -> Int -> Snake -> Snake
+moveOneSnake game id snake =
   let
     movedSnake = Snake.move snake boardIndex
   in
-    updateSnake snakeId movedSnake game
+    movedSnake
+    |> applySnakeCollision game
 
 
-moveSnakeWithCollision snake model = model
+moveSnakes : Game -> Game
+moveSnakes game =
+  let
+    movedSnakes = Dict.map (moveOneSnake game) game.snakes
+  in
+    { game | snakes = movedSnakes }
+
+
+applySnakeCollision : Game -> Snake -> Snake
+applySnakeCollision game snake =
+  let
+    snakeHead = Snake.head snake
+    eating = snakeHead == game.food
+    collided = detectCollision snakeHead (Snake.tail snake)
+    applyEffect =
+      if eating then
+        Snake.grow
+      else if collided then
+        Snake.kill
+      else
+       (\x -> x)
+  in
+    applyEffect snake
 
 {--
 moveSnake snakeId model =
