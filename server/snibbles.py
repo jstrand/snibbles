@@ -21,8 +21,9 @@ class GameThread(threading.Thread):
   def run(self):
     while True:
       message = "[" + ", ".join(self.getAllMessages()) + "]"
-      #message = self.getAllMessages()
-      print message
+
+      if len(playerList) > 0:
+        print message
 
       for player in playerList:
         player.write_message(message)
