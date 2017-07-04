@@ -40,13 +40,15 @@ newGame =
   |> placeFood
 
 
-addSnake : SnakeId -> Position -> Game -> Game
-addSnake snakeId position game =
+addSnake : SnakeId -> Direction -> Game -> Game
+addSnake snakeId dir game =
   let
-    newSnake = Snake.newSnake position
+    (position, nextSeed) = randomGamePosition game
+    newSnake = Snake.newSnakeWithDir position dir
   in
-    { game |
-      snakes = Dict.insert snakeId newSnake game.snakes
+    { game
+    | snakes = Dict.insert snakeId newSnake game.snakes
+    , seed = nextSeed
     }
 
 updateSnake : SnakeId -> Snake -> Game -> Game
@@ -72,12 +74,15 @@ obstacles model =
 
 placeFood game =
   let
-    (nextFood, nextSeed) = randomEmptyPosition game.seed (obstacles game)
+    (nextFood, nextSeed) = randomGamePosition game
   in
     { game
     | food = nextFood
     , seed = nextSeed
     }
+
+
+randomGamePosition game = randomEmptyPosition game.seed (obstacles game)
 
 
 randomEmptyPosition seed obstacles =

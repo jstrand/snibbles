@@ -26,14 +26,17 @@ type alias Snake =
   , alive: Bool
   }
 
-
-newSnake : Position -> Snake
-newSnake position =
+newSnakeWithDir : Position -> Direction -> Snake
+newSnakeWithDir position direction =
   { body = [position]
-  , moving = Right
+  , moving = direction
   , growth = 4
   , alive = True
   }
+
+
+newSnake : Position -> Snake
+newSnake position = newSnakeWithDir position Right
 
 
 kill snake = { snake | alive = False }

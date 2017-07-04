@@ -68,13 +68,30 @@ snakeDirDecoder = Json.Decode.map stringAsDir snakeMsgDecoder
 messageDecoder = Json.Decode.list (Json.Decode.map2 (,) snakeIdDecoder snakeDirDecoder)
 
 
+createSnake : ServerMessage -> Game -> Game
+createSnake (id, dir) game = Game.addSnake id dir game
+
+
+setupGame : Game -> List ServerMessage -> Game
+setupGame game messages =
+  let
+    existingSnakeIds = List.sort <| Dict.keys game.snakes
+    newSnakeIds = List.sort <| List.map Tuple.first messages
+    snakeSetHasChanged = existingSnakeIds /= newSnakeIds
+  in
+    if snakeSetHasChanged then
+      List.foldl createSnake emptyGame messages
+    else
+      game
+
+
 applyIncomingMessage : Game -> String -> Game
 applyIncomingMessage game message =
   let
     parsedMessage = decodeString messageDecoder message
   in
     case parsedMessage of
-      Ok newDirections -> List.foldr (uncurry changeDir) game newDirections
+      Ok newDirections -> List.foldr (uncurry changeDir) (setupGame game newDirections) newDirections
       Err reason -> { game | error = reason }
 
 
@@ -132,8 +149,7 @@ subscriptions model = Sub.batch
 
 main =
   Html.program
-    { init =
-        addSnake 1 (0,0) emptyGame
+    { init = emptyGame -- addSnake 1 (0,0) emptyGame
         ! []
     , view = view
     , update = update
@@ -141,29 +157,15 @@ main =
     }
 
 
-moveOneSnake : Game -> Int -> Snake -> Snake
-moveOneSnake game id snake =
+moveOneSnake : Int -> Snake -> Game -> Game
+moveOneSnake id snake game =
   let
     movedSnake = Snake.move snake boardIndex
-  in
-    movedSnake
-    |> applySnakeCollision game
 
-
-moveSnakes : Game -> Game
-moveSnakes game =
-  let
-    movedSnakes = Dict.map (moveOneSnake game) game.snakes
-  in
-    { game | snakes = movedSnakes }
-
-
-applySnakeCollision : Game -> Snake -> Snake
-applySnakeCollision game snake =
-  let
-    snakeHead = Snake.head snake
+    snakeHead = Snake.head movedSnake
     eating = snakeHead == game.food
-    collided = detectCollision snakeHead (Snake.tail snake)
+    collided = detectCollision snakeHead (Game.obstacles game)
+
     applyEffect =
       if eating then
         Snake.grow
@@ -171,29 +173,19 @@ applySnakeCollision game snake =
         Snake.kill
       else
        (\x -> x)
-  in
-    applyEffect snake
 
-{--
-moveSnake snakeId model =
-  let
-      snake = Dict.get snakeId model.snakes
-      movedSnake = Snake.move snake boardIndex
-      movedHead = Snake.head movedSnake
-      eating = movedHead == model.food
-      collided = detectCollision movedHead (Snake.tail movedSnake)
-      growingSnake = Snake.grow movedSnake
-      modelMoved = updateSnake snakeId movedSnake model
-      modelGrowing = updateSnake snakeId growingSnake model
-      (nextFood, seed) = nextFoodPosition model.seed (obstacles modelMoved)
+    collidedSnake = applyEffect movedSnake
+    snakesWithEffects = Dict.insert id collidedSnake game.snakes
+    gameWithMovedSnake = { game | snakes = snakesWithEffects }
+    gameWithMovedFood = Game.placeFood gameWithMovedSnake
   in
-    if collided then
-      updateSnake snakeId (Snake.kill snake) model
+    if not snake.alive then
+      game
     else if eating then
-      { modelGrowing
-      | food = nextFood
-      , seed = seed
-      }
+      gameWithMovedFood
     else
-      modelMoved
---}
+      gameWithMovedSnake
+
+
+moveSnakes : Game -> Game
+moveSnakes game = Dict.foldl moveOneSnake game game.snakes

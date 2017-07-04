@@ -42,7 +42,7 @@ class PlayerSocket(tornado.websocket.WebSocketHandler):
       self.playerList = playerList
       self.latestMessage = ""
       self.number = playerNumber
-      playerNumber = 1 #playerNumber + 1
+      playerNumber = playerNumber + 1
 
     def open(self):
       self.playerList.append(self)
