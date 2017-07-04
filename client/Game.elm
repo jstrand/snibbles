@@ -27,11 +27,12 @@ type alias Game =
 emptyGame : Game
 emptyGame =
   { snakes = Dict.empty
-  , food = (5,5)
+  , food = (0, 0)
   , seed = Random.initialSeed 12345
   , ticks = 0
   , error = ""
   }
+  |> placeFood
 
 
 newGame : Game
@@ -51,15 +52,19 @@ addSnake snakeId dir game =
     , seed = nextSeed
     }
 
+
 updateSnake : SnakeId -> Snake -> Game -> Game
 updateSnake snakeId snake game =
   { game
   | snakes = Dict.insert snakeId snake game.snakes
   }
 
+
 positionGen = Random.pair (Random.int 0 (width-1)) (Random.int 0 (height-1))
 
+
 snakePartPositions = obstacles
+
 
 obstacles : Game -> List Position
 obstacles model =
@@ -82,6 +87,17 @@ placeFood game =
     }
 
 
+changeDir : Int -> Direction -> Game -> Game
+changeDir snakeId dir model =
+  let
+    snake = Dict.get snakeId model.snakes
+    movedSnake = Maybe.map (\snake -> Snake.changeDir snake dir) snake
+    newSnakes = Maybe.map (\movedSnake -> Dict.insert snakeId movedSnake model.snakes) movedSnake
+    newModel = Maybe.map (\newSnakes -> { model | snakes = newSnakes}) newSnakes
+  in
+    Maybe.withDefault model newModel
+
+
 randomGamePosition game = randomEmptyPosition game.seed (obstacles game)
 
 
@@ -97,4 +113,38 @@ randomEmptyPosition seed obstacles =
 
 detectCollision = List.member
 
+
+moveOneSnake : Int -> Snake -> Game -> Game
+moveOneSnake id snake game =
+  let
+    movedSnake = Snake.move snake boardIndex
+
+    snakeHead = Snake.head movedSnake
+
+    eating = snakeHead == game.food
+
+    collided = detectCollision snakeHead (obstacles game)
+
+    gameWithMovedSnake = updateSnake id movedSnake game
+    gameWithMovedSnakeAndFood = placeFood gameWithMovedSnake
+  in
+    if not snake.alive then
+      game
+
+    else if collided then
+      game
+      |> updateSnake id (Snake.kill snake)
+
+    else if eating then
+      game
+      |> updateSnake id (Snake.grow movedSnake)
+      |> placeFood
+
+    else
+      game
+      |> updateSnake id movedSnake
+
+
+moveSnakes : Game -> Game
+moveSnakes game = Dict.foldl moveOneSnake game game.snakes
 

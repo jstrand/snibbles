@@ -26,20 +26,9 @@ server = "ws://localhost:9000"
 onTick : Game -> Game
 onTick game =
   let
-    gameWithMovedSnakes = moveSnakes game
+    gameWithMovedSnakes = Game.moveSnakes game
   in
     { gameWithMovedSnakes | ticks = game.ticks + 1 }
-
-
-changeDir : Int -> Direction -> Game -> Game
-changeDir snakeId dir model =
-  let
-    snake = Dict.get snakeId model.snakes
-    movedSnake = Maybe.map (\snake -> Snake.changeDir snake dir) snake
-    newSnakes = Maybe.map (\movedSnake -> Dict.insert snakeId movedSnake model.snakes) movedSnake
-    newModel = Maybe.map (\newSnakes -> { model | snakes = newSnakes}) newSnakes
-  in
-    Maybe.withDefault model newModel
 
 
 dirAsString dir =
@@ -91,7 +80,7 @@ applyIncomingMessage game message =
     parsedMessage = decodeString messageDecoder message
   in
     case parsedMessage of
-      Ok newDirections -> List.foldr (uncurry changeDir) (setupGame game newDirections) newDirections
+      Ok newDirections -> List.foldr (uncurry Game.changeDir) (setupGame game newDirections) newDirections
       Err reason -> { game | error = reason }
 
 
@@ -157,35 +146,3 @@ main =
     }
 
 
-moveOneSnake : Int -> Snake -> Game -> Game
-moveOneSnake id snake game =
-  let
-    movedSnake = Snake.move snake boardIndex
-
-    snakeHead = Snake.head movedSnake
-    eating = snakeHead == game.food
-    collided = detectCollision snakeHead (Game.obstacles game)
-
-    applyEffect =
-      if eating then
-        Snake.grow
-      else if collided then
-        Snake.kill
-      else
-       (\x -> x)
-
-    collidedSnake = applyEffect movedSnake
-    snakesWithEffects = Dict.insert id collidedSnake game.snakes
-    gameWithMovedSnake = { game | snakes = snakesWithEffects }
-    gameWithMovedFood = Game.placeFood gameWithMovedSnake
-  in
-    if not snake.alive then
-      game
-    else if eating then
-      gameWithMovedFood
-    else
-      gameWithMovedSnake
-
-
-moveSnakes : Game -> Game
-moveSnakes game = Dict.foldl moveOneSnake game game.snakes
