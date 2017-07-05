@@ -89,13 +89,9 @@ placeFood game =
 
 changeDir : Int -> Direction -> Game -> Game
 changeDir snakeId dir model =
-  let
-    snake = Dict.get snakeId model.snakes
-    movedSnake = Maybe.map (\snake -> Snake.changeDir snake dir) snake
-    newSnakes = Maybe.map (\movedSnake -> Dict.insert snakeId movedSnake model.snakes) movedSnake
-    newModel = Maybe.map (\newSnakes -> { model | snakes = newSnakes}) newSnakes
-  in
-    Maybe.withDefault model newModel
+  Dict.get snakeId model.snakes
+  |> Maybe.map (\snake -> updateSnake snakeId (Snake.changeDir dir snake) model)
+  |> Maybe.withDefault model
 
 
 randomGamePosition game = randomEmptyPosition game.seed (obstacles game)

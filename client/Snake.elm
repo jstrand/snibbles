@@ -50,7 +50,8 @@ head snake =
 tail snake = tailOrEmpty snake.body
 
 
-changeDir snake dir =
+changeDir : Direction -> Snake -> Snake
+changeDir dir snake =
   if snake.moving == (opposing dir) then
     snake
   else
