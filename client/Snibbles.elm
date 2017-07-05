@@ -3,7 +3,8 @@ module Snibbles exposing (..)
 import Snake exposing (..)
 import Game exposing (..)
 import Board
-import AsciiBoard
+import CanvasBoard exposing (viewBoard)
+import Element exposing (toHtml)
 import Dict
 
 import Html exposing (Html)
@@ -12,7 +13,6 @@ import Time exposing (Time)
 import Keyboard
 import WebSocket
 import Json.Decode exposing (..)
-
 
 type Msg =
     Tick Time
@@ -110,21 +110,24 @@ update msg game =
     IncomingMessage message -> (performGameStep game message, Cmd.none)
 
 
-board : Game -> String
-board model =
+gameToBoard : Game -> Board.Board
+gameToBoard model =
   Board.emptyBoard width height
   |> Board.addSnake (snakePartPositions model)
   |> Board.addFood model.food
-  |> AsciiBoard.boardToString
+
+
+gameToHtml : Game -> Html Msg
+gameToHtml =
+  gameToBoard
+  >> viewBoard
+  >> toHtml
 
 
 view : Game -> Html Msg
-view model =
-  Html.div [Att.class "container"]
-  [ Html.pre [Att.class "board"] [ Html.text (board model) ]
-  --, Html.pre [Att.class "score"]
-  --    [ Html.text <| toString <| List.length model.snake.body ]
-  ]
+view game =
+  Html.div [Att.class "container", Att.style [("margin", "10px")]]
+  [ gameToHtml game ]
 
 
 subscriptions : Game -> Sub Msg

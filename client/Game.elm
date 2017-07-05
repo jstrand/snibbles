@@ -6,7 +6,7 @@ import Snake exposing (..)
 import Dict exposing (Dict)
 
 
-boardSize = (30, 10)
+boardSize = (30, 30)
 width = Tuple.first boardSize
 height = Tuple.second boardSize
 boardIndex = (width-1, height-1)

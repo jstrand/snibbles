@@ -15,6 +15,14 @@ type alias Board = Matrix Piece
 map : (a -> b) -> Matrix a -> Matrix b
 map = Matrix.map
 
+mapWithLocation : ((Int, Int) -> Piece -> b) -> Board -> List b
+mapWithLocation f board =
+  Matrix.mapWithLocation f board
+  |> Matrix.flatten
+
+width = Matrix.colCount
+height = Matrix.rowCount
+
 
 toList : Matrix a -> List (List a)
 toList = Matrix.toList
