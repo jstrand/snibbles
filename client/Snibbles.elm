@@ -110,11 +110,17 @@ update msg game =
     IncomingMessage message -> (performGameStep game message, Cmd.none)
 
 
+snakesWithId : Dict.Dict Int Snake -> List (Int, List (Int, Int))
+snakesWithId snakes =
+  Dict.toList snakes
+  |> List.map (\(id, snake) -> (id, snake.body))
+
+
 gameToBoard : Game -> Board.Board
-gameToBoard model =
+gameToBoard game =
   Board.emptyBoard width height
-  |> Board.addSnake (snakePartPositions model)
-  |> Board.addFood model.food
+  |> Board.addSnakes (snakesWithId game.snakes)
+  |> Board.addFood game.food
 
 
 gameToHtml : Game -> Html Msg
@@ -127,7 +133,7 @@ gameToHtml =
 view : Game -> Html Msg
 view game =
   Html.div [Att.class "container", Att.style [("margin", "10px")]]
-  [ gameToHtml game ]
+  [ Html.div [Att.class "board"] [gameToHtml game] ]
 
 
 subscriptions : Game -> Sub Msg

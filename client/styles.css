@@ -1,16 +1,25 @@
 body {
-  background-color: #181818;
-  color: #81f265;
+  background-color: rgb(20, 12, 28)
 }
 
 .container {
+  position: 'absolute';
+  display: 'flex';
+  width: '100%';
+  height: '100%';
+  margin: 0;
+  padding:0;
+  left:0;
+  top:0
 }
 
 .board {
-  left: 10px;
-  margin-left: auto;
-  margin-right: auto;
-  display: inline-block;
+  margin: auto;
+  margin: auto;
+  padding: 0;
+  width: 500;
+  height: 500;
+  border: 2px solid rgb(109, 170, 44);
 }
 
 .score {

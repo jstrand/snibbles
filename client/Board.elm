@@ -5,7 +5,7 @@ import Matrix exposing (Matrix, map)
 
 type Piece =
     Empty
-  | SnakePart
+  | SnakePart Int
   | Food
 
 
@@ -17,7 +17,7 @@ map = Matrix.map
 
 mapWithLocation : ((Int, Int) -> Piece -> b) -> Board -> List b
 mapWithLocation f board =
-  Matrix.mapWithLocation f board
+  Matrix.mapWithLocation (\(y, x) piece -> f (x, y) piece) board
   |> Matrix.flatten
 
 width = Matrix.colCount
@@ -38,8 +38,13 @@ setValue value pos matrix =
     (x,y) -> Matrix.set (y, x) value matrix
 
 
-addSnake : List (Int, Int) -> Board -> Board
-addSnake = apply SnakePart
+addSnake : Int -> List (Int, Int) -> Board -> Board
+addSnake id = apply (SnakePart id)
+
+
+addSnakes : List (Int, List (Int, Int)) -> Board -> Board
+addSnakes snakes board =
+  List.foldr (uncurry addSnake) board snakes
 
 
 addFood : (Int, Int) -> Board -> Board

@@ -5,10 +5,11 @@ import Element exposing (Element)
 import Color exposing (..)
 
 import Board exposing (Board, Piece)
+import Palette exposing (snakeColor, foodColor)
 
 
 viewBoard : Board -> Element
-viewBoard board = 
+viewBoard board =
     let
         setup =
         { board = board
@@ -31,9 +32,10 @@ viewSnakes setup =
 
 
 pieceToElement : Setup -> (Int, Int) -> Piece -> Form
-pieceToElement setup (y, x) piece =
+pieceToElement setup position piece =
     case piece of
-        Board.SnakePart -> snake setup Color.red (x, y)
+        Board.SnakePart id -> snake setup (snakeColor id) position
+        Board.Food -> food setup position
         _ -> toForm Element.empty
 
 
@@ -52,11 +54,24 @@ positionToCoordinate setup (x, y) =
         (xf * (tileWidth setup) + offsetX, yf * -(tileHeight setup) + offsetY)
 
 
+food : Setup -> (Int, Int) -> Form
+food setup position =
+    let
+        coordinates = positionToCoordinate setup position
+        radius = tileWidth setup * 0.5
+    in
+        circle radius
+        |> filled foodColor
+        |> move coordinates
+
+
+
 snake : Setup -> Color -> (Int, Int) -> Form
 snake setup color position =
     let
         coordinates = positionToCoordinate setup position
+        bleed = 1 -- to make tiles overlap just a bit
     in
-        rect (tileWidth setup) (tileHeight setup)
+        rect (tileWidth setup + bleed) (tileHeight setup + bleed)
         |> filled color
         |> move coordinates
