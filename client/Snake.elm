@@ -53,6 +53,17 @@ isDead : Snake -> Bool
 isDead = not << isAlive
 
 
+recouperate : Snake -> Snake
+recouperate snake =
+  { snake
+  | respawnIn = if snake.respawnIn == 0 then 0 else snake.respawnIn - 1
+  }
+
+
+isRespawning : Snake -> Bool
+isRespawning snake = snake.respawnIn == 1
+
+
 head : Snake -> Position
 head snake =
   List.head snake.body
@@ -109,5 +120,8 @@ move snake max =
       newBody = tailTransform <| nextHead :: snake.body
       newGrowth = if snake.growth <= 0 then 0 else snake.growth - 1
   in
-    { snake | body = newBody, growth = newGrowth }
+    { snake
+    | body = newBody
+    , growth = newGrowth
+    }
 

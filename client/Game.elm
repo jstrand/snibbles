@@ -140,8 +140,13 @@ moveOneSnake id snake game =
     gameWithMovedSnake = updateSnake id movedSnake game
     gameWithMovedSnakeAndFood = placeFood gameWithMovedSnake
   in
-    if Snake.isDead snake then
+    if Snake.isRespawning snake then
       game
+      |> addSnake id snake.moving
+
+    else if Snake.isDead snake then
+      game
+      |> updateSnake id (Snake.recouperate snake)
 
     else if collided then
       game
