@@ -8,6 +8,7 @@ type Direction =
   | Right
 
 
+opposing : Direction -> Direction
 opposing dir =
   case dir of
   Up -> Down
@@ -23,15 +24,16 @@ type alias Snake =
   { body: List Position
   , moving: Direction
   , growth: Int
-  , alive: Bool
+  , respawnIn: Int
   }
+
 
 newSnakeWithDir : Position -> Direction -> Snake
 newSnakeWithDir position direction =
   { body = [position]
   , moving = direction
   , growth = 4
-  , alive = True
+  , respawnIn = 0
   }
 
 
@@ -39,15 +41,30 @@ newSnake : Position -> Snake
 newSnake position = newSnakeWithDir position Right
 
 
-kill snake = { snake | alive = False }
+kill : Snake -> Snake
+kill snake = { snake | respawnIn = 10 }
 
 
+isAlive : Snake -> Bool
+isAlive snake = snake.respawnIn <= 0
+
+
+isDead : Snake -> Bool
+isDead = not << isAlive
+
+
+head : Snake -> Position
 head snake =
   List.head snake.body
   |> Maybe.withDefault (0,0)
 
 
+tail : Snake -> List Position
 tail snake = tailOrEmpty snake.body
+
+
+body : Snake -> List Position
+body = .body
 
 
 changeDir : Direction -> Snake -> Snake
@@ -58,16 +75,23 @@ changeDir dir snake =
     { snake | moving = dir }
 
 
+wrap : Int -> Int -> Int
 wrap value max = if value < 0 then max else if value > max then 0 else value
 
 
+tailOrEmpty : List a -> List a
 tailOrEmpty = Maybe.withDefault [] << List.tail
 
 
+growth : Int
 growth = 4
+
+
+grow : Snake -> Snake
 grow snake = { snake | growth = snake.growth + growth }
 
 
+move : Snake -> Position -> Snake
 move snake max =
   let (x,y) = head snake
       dropLast = List.reverse >> tailOrEmpty >> List.reverse
@@ -83,7 +107,7 @@ move snake max =
         Right -> (wrap (x + 1) maxX, y)
 
       newBody = tailTransform <| nextHead :: snake.body
-      newGrowth = if snake.growth <= 0 then 0 else snake.growth-1
+      newGrowth = if snake.growth <= 0 then 0 else snake.growth - 1
   in
     { snake | body = newBody, growth = newGrowth }
 

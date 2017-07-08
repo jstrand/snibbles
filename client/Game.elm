@@ -6,9 +6,19 @@ import Snake exposing (..)
 import Dict exposing (Dict)
 
 
+boardSize : Position
 boardSize = (30, 30)
+
+
+width : Int
 width = Tuple.first boardSize
+
+
+height : Int
 height = Tuple.second boardSize
+
+
+boardIndex : Position
 boardIndex = (width-1, height-1)
 
 
@@ -60,16 +70,18 @@ updateSnake snakeId snake game =
   }
 
 
+positionGen : Random.Generator Position
 positionGen = Random.pair (Random.int 0 (width-1)) (Random.int 0 (height-1))
 
 
+snakePartPositions : Game -> List Position
 snakePartPositions = obstacles
 
 
 obstacles : Game -> List Position
 obstacles model =
   let
-    getBody _ snake = snake.body
+    getBody _ snake = Snake.body snake
   in
     model.snakes
     |> Dict.map getBody
@@ -77,6 +89,7 @@ obstacles model =
     |> List.concat
 
 
+placeFood : Game -> Game
 placeFood game =
   let
     (nextFood, nextSeed) = randomGamePosition game
@@ -94,9 +107,11 @@ changeDir snakeId dir model =
   |> Maybe.withDefault model
 
 
+randomGamePosition : Game -> (Position, Random.Seed)
 randomGamePosition game = randomEmptyPosition game.seed (obstacles game)
 
 
+randomEmptyPosition : Random.Seed -> List Position -> (Position, Random.Seed)
 randomEmptyPosition seed obstacles =
   let (randPos, nextSeed) = Random.step positionGen seed
       collided = detectCollision randPos obstacles
@@ -107,6 +122,7 @@ randomEmptyPosition seed obstacles =
     (randPos, nextSeed)
 
 
+detectCollision : a -> List a -> Bool
 detectCollision = List.member
 
 
@@ -124,7 +140,7 @@ moveOneSnake id snake game =
     gameWithMovedSnake = updateSnake id movedSnake game
     gameWithMovedSnakeAndFood = placeFood gameWithMovedSnake
   in
-    if not snake.alive then
+    if Snake.isDead snake then
       game
 
     else if collided then
