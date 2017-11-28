@@ -2,7 +2,7 @@
 
 mkdir out
 
-elm-make Snibbles.elm --output snibbles.js
+elm-make Snibbles.elm --output snibbles.js --yes
 
 cp snibbles.html styles.css snibbles.js out/
 
